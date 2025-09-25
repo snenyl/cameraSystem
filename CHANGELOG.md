@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0.0
+
+Features:
+
+- migrated scripts and configuration to Farming Simulator 25 (descVersion 99)
+- added compatibility fallbacks for new FS25 APIs while keeping FS22 support where possible
+- improved HUD integration stability checks
+
 ## 1.0.0.2
 
 Fix:

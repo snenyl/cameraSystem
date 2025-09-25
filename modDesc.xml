@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<modDesc descVersion="79">
+<modDesc descVersion="99">
   <author>VertexFloat</author>
-  <version>1.0.0.2</version>
+  <version>2.0.0.0</version>
   <title>
     <en>Camera System</en>
     <de>Kamerasystem</de>
@@ -15,8 +15,8 @@ As standard, some of the originally available <a href="https://github.com/Vertex
 Change camera system mode (off/on) - "z" key (default)
 Next/previous camera - "left shift + k/m" keys (default)
 
-Changelog (1.0.0.2):
-- fixed game crash in patch 1.13.1.1 (unfortunately the camera quality is slightly worse)
+Changelog (2.0.0.0):
+- added support for Farming Simulator 25
 
 For more information, full changelog, vehicle integration instructions, help or a bug report, please visit <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></en>
     <de><![CDATA[Diese Modifikation bietet die Möglichkeit, Kameras hinzuzufügen, z. eine Abflussrohrkamera oder eine Rückfahrkamera. Sie können einfach zwischen hinzugefügten Kameras wechseln, die als HUD angezeigt werden.
@@ -25,28 +25,28 @@ Standardmäßig waren einige der ursprünglich verfügbaren <a href="https://git
 Kamerasystemmodus ändern (aus/ein) – „z“-Taste (Standard)
 Nächste/vorherige Kamera – Tasten „linke Umschalttaste + k/m“ (Standard)
 
-Änderungsprotokoll (1.0.0.2):
-- Spielabsturz in Patch 1.13.1.1 behoben (leider ist die Kameraqualität etwas schlechter)
+Änderungsprotokoll (2.0.0.0):
+- Unterstützung für Farming Simulator 25 hinzugefügt
 
 Weitere Informationen, ein vollständiges Änderungsprotokoll, Anweisungen zur Fahrzeugintegration, Hilfe oder einen Fehlerbericht finden Sie auf <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></de>
-    <fr><![CDATA[Cette modification donne la possibilité d"ajouter des caméras, par ex. un tuyau d"évacuation ou une caméra de recul. Vous pouvez facilement basculer entre les caméras ajoutées qui sont affichées sous forme de HUD.
+    <fr><![CDATA[Cette modification donne la possibilité d'ajouter des caméras, par ex. un tuyau d'évacuation ou une caméra de recul. Vous pouvez facilement basculer entre les caméras ajoutées qui sont affichées sous forme de HUD.
 En standard, certains des <a href="https://github.com/VertexFloat/cameraSystem/blob/main/VEHICLES.md">véhicules et outils</a> disponibles à l'origine étaient équipés de configurations de caméra.
 
 Changer le mode système de la caméra (off/on) - touche "z" (par défaut)
 Appareil photo suivant/précédent - touches "shift gauche + k/m" (par défaut)
 
-Journal des modifications (1.0.0.2) :
-- Correction d'un crash du jeu dans le patch 1.13.1.1 (malheureusement, la qualité de la caméra est légèrement pire)
+Journal des modifications (2.0.0.0) :
+- ajout de la prise en charge de Farming Simulator 25
 
-Pour plus d'informations, un journal des modifications complet, des instructions d"intégration de véhicule, de l"aide ou un rapport de bogue, veuillez visiter <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></fr>
+Pour plus d'informations, un journal des modifications complet, des instructions d'intégration de véhicule, de l'aide ou un rapport de bogue, veuillez visiter <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></fr>
     <pl><![CDATA[Modyfikacja ta daje możliwość dodania kamer np. kamery rury wyładowczej lub kamery wstecznej. Z łatwością można przełączać się między dodanymi kamerami które wyświetlane są w postaci HUD.
 Standardowo część dostępnych oryginalnie <a href="https://github.com/VertexFloat/cameraSystem/blob/main/VEHICLES.md">pojazdów oraz narzędzi</a> została wyposażona w konfiguracje kamer.
 
 Zmień tryb systemu kamer (wyłączony/włączony) - klawisz "z" (standardowo)
 Następna/poprzednia kamera - klawisze "lewy shift + k/m" (standardowo)
 
-Dziennik zmian (1.0.0.2):
-- naprawiono awarię gry w patchu 1.13.1.1 (niestety jakość kamery jest nieco gorsza)
+Dziennik zmian (2.0.0.0):
+- dodano obsługę Farming Simulator 25
 
 Po więcej informacji, pełny dziennik zmian, instrukcje integracji pojazdu, pomoc lub zgłoszenie błędu, odwiedź stronę <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></pl>
   </description>
