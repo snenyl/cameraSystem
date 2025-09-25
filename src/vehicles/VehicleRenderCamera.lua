@@ -85,7 +85,13 @@ function VehicleRenderCamera:createRender()
   local resolutionY = (g_screenHeight * .2) * 2
   local aspectRatio = resolutionX / resolutionY
 
-  self.overlay = createRenderOverlay(self.camera, aspectRatio, resolutionX, resolutionY, true, 4294967295, 4294967295)
+  if createRenderOverlay ~= nil then
+    self.overlay = createRenderOverlay(self.camera, aspectRatio, resolutionX, resolutionY, true, 4294967295, 4294967295)
+  else
+    self.overlay = 0
+
+    Logging.warning("CameraSystem: createRenderOverlay API unavailable - camera HUD view disabled.")
+  end
 end
 
 function VehicleRenderCamera:update(dt)
