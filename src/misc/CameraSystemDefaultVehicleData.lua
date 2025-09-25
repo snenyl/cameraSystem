@@ -63,25 +63,23 @@ function CameraSystemDefaultVehicleData:loadDefualtVehicleCameraSystemData()
 
         if camera.nodeName == nil or camera.nodeName == "" then
           Logging.xmlWarning(xmlFile, "Missing 'nodeName' for camera '%s' - entry ignored.", cameraKey)
+        else
+          local visibilityNodeName = xmlFile:getValue(cameraKey .. "#visibilityNodeName")
 
-          return false
+          if visibilityNodeName and visibilityNodeName ~= "" then
+            camera.visibilityNodeName = visibilityNodeName
+          end
+
+          camera.name = xmlFile:getValue(cameraKey .. "#name", "ui_cameraSystem_nameDefault", CameraSystemDefaultVehicleData.MOD_NAME)
+          camera.translation = xmlFile:getValue(cameraKey .. "#translation", "0 0 0", true)
+          camera.rotation = xmlFile:getValue(cameraKey .. "#rotation", "0 0 0", true)
+          camera.fov = xmlFile:getValue(cameraKey .. "#fov", 60)
+          camera.nearClip = xmlFile:getValue(cameraKey .. "#nearClip", 0.01)
+          camera.farClip = xmlFile:getValue(cameraKey .. "#farClip", 10000)
+          camera.activeFunc = xmlFile:getValue(cameraKey .. "#activeFunc")
+
+          table.insert(vehicle.cameras, camera)
         end
-
-        local visibilityNodeName = xmlFile:getValue(cameraKey .. "#visibilityNodeName")
-
-        if visibilityNodeName ~= "" then
-          camera.visibilityNodeName = visibilityNodeName
-        end
-
-        camera.name = xmlFile:getValue(cameraKey .. "#name", "ui_cameraSystem_nameDefault", CameraSystemDefaultVehicleData.MOD_NAME)
-        camera.translation = xmlFile:getValue(cameraKey .. "#translation", "0 0 0", true)
-        camera.rotation = xmlFile:getValue(cameraKey .. "#rotation", "0 0 0", true)
-        camera.fov = xmlFile:getValue(cameraKey .. "#fov", 60)
-        camera.nearClip = xmlFile:getValue(cameraKey .. "#nearClip", 0.01)
-        camera.farClip = xmlFile:getValue(cameraKey .. "#farClip", 10000)
-        camera.activeFunc = xmlFile:getValue(cameraKey .. "#activeFunc")
-
-        table.insert(vehicle.cameras, camera)
       end)
 
       if #vehicle.cameras == 0 then
@@ -89,6 +87,8 @@ function CameraSystemDefaultVehicleData:loadDefualtVehicleCameraSystemData()
 
         return
       end
+
+      vehicle.basename = vehicle.xmlFilename:match("([^/\\]+)$")
 
       table.insert(self.cameraData, vehicle)
     end)
@@ -212,10 +212,16 @@ function CameraSystemDefaultVehicleData:getCameraSystemDefaultData(configFilenam
     return nil
   end
 
+  local targetBase = configFilename:match("([^/\\]+)$")
+
   for i = 1, #self.cameraData do
     local vehicleData = self.cameraData[i]
 
     if vehicleData.xmlFilename ~= nil and vehicleData.xmlFilename ~= "" then
+      if vehicleData.basename ~= nil and targetBase ~= nil and vehicleData.basename == targetBase then
+        return vehicleData
+      end
+
       if StringUtil ~= nil and StringUtil.endsWith ~= nil then
         if StringUtil.endsWith(configFilename, vehicleData.xmlFilename) then
           return vehicleData
