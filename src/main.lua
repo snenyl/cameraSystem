@@ -67,8 +67,16 @@ local function validateTypes(self)
   if self.typeName == "vehicle" then
     g_cameraSystem:initialize()
 
-    if g_modIsLoaded.FS22_precisionFarming then
-      g_cameraSystem.isPrecisionFarming = true
+    if g_modIsLoaded ~= nil then
+      local precisionMods = {"FS25_precisionFarming", "FS22_precisionFarming"}
+
+      for i = 1, #precisionMods do
+        if g_modIsLoaded[precisionMods[i]] then
+          g_cameraSystem.isPrecisionFarming = true
+
+          break
+        end
+      end
     end
   end
 end
