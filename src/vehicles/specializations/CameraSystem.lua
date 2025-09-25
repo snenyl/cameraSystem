@@ -1,4 +1,5 @@
 -- @author: 4c65736975, All Rights Reserved
+-- @contributor: snenyl, 2024|09|24
 -- @version: 1.0.0.0, 09|08|2023
 -- @filename: CameraSystem.lua
 

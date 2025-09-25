@@ -1,4 +1,5 @@
 -- @author: 4c65736975, All Rights Reserved
+-- @contributor: snenyl, 2024|09|24
 -- @version: 1.0.0.1, 27|01|2024
 -- @filename: VehicleRenderCamera.lua
 
