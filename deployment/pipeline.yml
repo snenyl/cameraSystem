@@ -1,0 +1,29 @@
+name: Build CameraSystem Mod
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Build distributable zip
+        run: |
+          mkdir -p dist
+          cp -r data src icon_cameraSystem.dds modDesc.xml dist/
+          cd dist
+          zip -r ../CameraSystem.zip ./*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CameraSystem
+          path: CameraSystem.zip
