@@ -13,7 +13,11 @@ CameraSystemEnterable.STATE = {
 
 source(CameraSystemEnterable.MOD_DIRECTORY .. "src/gui/hud/CameraSystemHUDExtension.lua")
 
-VehicleHUDExtension.registerHUDExtension(CameraSystemEnterable, CameraSystemHUDExtension)
+if VehicleHUDExtension ~= nil and VehicleHUDExtension.registerHUDExtension ~= nil then
+  VehicleHUDExtension.registerHUDExtension(CameraSystemEnterable, CameraSystemHUDExtension)
+else
+  Logging.warning("CameraSystemEnterable: VehicleHUDExtension API unavailable - disabling HUD overlay registration.")
+end
 
 function CameraSystemEnterable.prerequisitesPresent(specializations)
   return SpecializationUtil.hasSpecialization(Enterable, specializations) and SpecializationUtil.hasSpecialization(CameraSystem, specializations)
