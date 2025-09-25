@@ -9,13 +9,31 @@ function CameraSystem.prerequisitesPresent(specializations)
 end
 
 function CameraSystem.initSpecialization()
-  g_configurationManager:addConfigurationType("camera", g_i18n:getText("configuration_cameraSystem"), "cameraSystem", nil, nil, nil, ConfigurationUtil.SELECTOR_MULTIOPTION)
+  local configurationManager = g_vehicleConfigurationManager
+
+  if configurationManager ~= nil then
+    configurationManager:addConfigurationType("camera", g_i18n:getText("configuration_cameraSystem"), "cameraSystem", nil, nil, nil, ConfigurationUtil.SELECTOR_MULTIOPTION)
+  elseif g_configurationManager ~= nil then
+    Logging.warning("CameraSystem: g_vehicleConfigurationManager missing - using legacy g_configurationManager fallback (intended for FS22).")
+    g_configurationManager:addConfigurationType("camera", g_i18n:getText("configuration_cameraSystem"), "cameraSystem", nil, nil, nil, ConfigurationUtil.SELECTOR_MULTIOPTION)
+  else
+    Logging.warning("CameraSystem: Failed to locate configuration manager to register camera configuration type.")
+  end
+
   local schema = Vehicle.xmlSchema
 
-  schema:setXMLSpecializationType("CameraSystem")
-  VehicleRenderCamera.registerCameraXMLPaths(schema, "vehicle.cameraSystem.cameraConfigurations.cameraConfiguration(?).camera(?)")
-  ObjectChangeUtil.registerObjectChangeXMLPaths(schema, "vehicle.cameraSystem.cameraConfigurations.cameraConfiguration(?)")
-  schema:setXMLSpecializationType()
+  if schema == nil and Vehicle.xmlSchemaRegistration ~= nil then
+    schema = Vehicle.xmlSchemaRegistration
+  end
+
+  if schema ~= nil then
+    schema:setXMLSpecializationType("CameraSystem")
+    VehicleRenderCamera.registerCameraXMLPaths(schema, "vehicle.cameraSystem.cameraConfigurations.cameraConfiguration(?).camera(?)")
+    ObjectChangeUtil.registerObjectChangeXMLPaths(schema, "vehicle.cameraSystem.cameraConfigurations.cameraConfiguration(?)")
+    schema:setXMLSpecializationType()
+  else
+    Logging.warning("CameraSystem: Vehicle XML schema unavailable - camera system XML paths not registered.")
+  end
 end
 
 function CameraSystem.registerFunctions(vehicleType)
