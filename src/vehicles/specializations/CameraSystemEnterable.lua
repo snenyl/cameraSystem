@@ -13,6 +13,14 @@ CameraSystemEnterable.STATE = {
 
 source(CameraSystemEnterable.MOD_DIRECTORY .. "src/gui/hud/CameraSystemHUDExtension.lua")
 
+local function getCameraSystemCameraCount(vehicle)
+  if vehicle ~= nil and vehicle.spec_cameraSystem ~= nil and vehicle.spec_cameraSystem.cameras ~= nil and vehicle.getNumOfCameraSystemCameras ~= nil then
+    return vehicle:getNumOfCameraSystemCameras()
+  end
+
+  return 0
+end
+
 if VehicleHUDExtension ~= nil and VehicleHUDExtension.registerHUDExtension ~= nil then
   VehicleHUDExtension.registerHUDExtension(CameraSystemEnterable, CameraSystemHUDExtension)
 else
@@ -38,6 +46,19 @@ function CameraSystemEnterable.registerEventListeners(vehicleType)
   SpecializationUtil.registerEventListener(vehicleType, "onLoad", CameraSystemEnterable)
   SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", CameraSystemEnterable)
   SpecializationUtil.registerEventListener(vehicleType, "onEnterVehicle", CameraSystemEnterable)
+  SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", CameraSystemEnterable)
+end
+
+function CameraSystemEnterable:onPostLoad(savegame)
+  local spec = self.spec_cameraSystemEnterable
+
+  if spec ~= nil then
+    spec.hasCameras = getCameraSystemCameraCount(self) > 0
+
+    if spec.hasCameras and spec.activeCamera == nil then
+      self:setActiveCameraSystemCameraIndex(spec.camIndex)
+    end
+  end
 end
 
 function CameraSystemEnterable:onLoad(savegame)
@@ -51,11 +72,15 @@ function CameraSystemEnterable:onLoad(savegame)
     inputToggleCameraSystemSwitchCamera = g_i18n:getText("action_cameraSystem_switchCamera", self.customEnvironment),
   }
   spec.camIndex = 1
-  spec.hasCameras = self:getNumOfCameraSystemCameras() > 0
+  spec.hasCameras = getCameraSystemCameraCount(self) > 0
   spec.currentCameraSystemState = CameraSystemEnterable.STATE.OFF
   spec.isDirty = true
 
-  self:setActiveCameraSystemCameraIndex(spec.camIndex)
+  if spec.hasCameras then
+    self:setActiveCameraSystemCameraIndex(spec.camIndex)
+  else
+    spec.activeCamera = nil
+  end
 end
 
 function CameraSystemEnterable:onRegisterActionEvents(isActiveForInput, isActiveForInputIgnoreSelection)
@@ -69,7 +94,7 @@ function CameraSystemEnterable:onRegisterActionEvents(isActiveForInput, isActive
 
       g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_HIGH)
 
-      if self:getNumOfCameraSystemCameras() > 1 then
+      if getCameraSystemCameraCount(self) > 1 then
         _, actionEventId = self:addActionEvent(spec.actionEvents, InputAction.TOGGLE_CAMERA_SYSTEM_CAMERA, self, CameraSystemEnterable.actionEventCameraSystemCameraSwitch, false, true, false, true, nil)
 
         g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_HIGH)
@@ -112,9 +137,16 @@ end
 
 function CameraSystemEnterable:setActiveCameraSystemCameraIndex(index)
   local spec = self.spec_cameraSystemEnterable
-  local numCameras = self:getNumOfCameraSystemCameras()
+  local numCameras = getCameraSystemCameraCount(self)
 
   spec.camIndex = index
+
+  if numCameras == 0 then
+    spec.camIndex = 1
+    spec.activeCamera = nil
+
+    return
+  end
 
   if spec.camIndex <= 0 then
     spec.camIndex = numCameras
@@ -124,12 +156,22 @@ function CameraSystemEnterable:setActiveCameraSystemCameraIndex(index)
     spec.camIndex = 1
   end
 
-  spec.activeCamera = self.spec_cameraSystem.cameras[spec.camIndex]
+  local cameraSystemSpec = self.spec_cameraSystem
+
+  if cameraSystemSpec ~= nil and cameraSystemSpec.cameras ~= nil then
+    spec.activeCamera = cameraSystemSpec.cameras[spec.camIndex]
+  else
+    spec.activeCamera = nil
+  end
 end
 
 function CameraSystemEnterable:addToolCameraSystemCameras(cameras)
   local spec = self.spec_cameraSystemEnterable
   local cameraSystemSpec = self.spec_cameraSystem
+
+  if cameraSystemSpec == nil or cameraSystemSpec.cameras == nil then
+    return
+  end
 
   for _, toolCamera in pairs(cameras) do
     table.insert(cameraSystemSpec.cameras, toolCamera)
@@ -137,7 +179,7 @@ function CameraSystemEnterable:addToolCameraSystemCameras(cameras)
 
   cameraSystemSpec.numCameras = #cameraSystemSpec.cameras
 
-  spec.hasCameras = self:getNumOfCameraSystemCameras() > 0
+  spec.hasCameras = getCameraSystemCameraCount(self) > 0
 
   if spec.hasCameras then
     self:setActiveCameraSystemCameraIndex(spec.camIndex)
@@ -150,6 +192,10 @@ function CameraSystemEnterable:removeToolCameraSystemCameras(cameras)
   local spec = self.spec_cameraSystemEnterable
   local cameraSystemSpec = self.spec_cameraSystem
   local isToolCameraActive = false
+
+  if cameraSystemSpec == nil or cameraSystemSpec.cameras == nil then
+    return
+  end
 
   for i = #cameraSystemSpec.cameras, 1, -1 do
     local camera = cameraSystemSpec.cameras[i]
@@ -169,7 +215,7 @@ function CameraSystemEnterable:removeToolCameraSystemCameras(cameras)
 
   cameraSystemSpec.numCameras = #cameraSystemSpec.cameras
 
-  spec.hasCameras = self:getNumOfCameraSystemCameras() > 0
+  spec.hasCameras = getCameraSystemCameraCount(self) > 0
 
   if isToolCameraActive then
     spec.camIndex = 1
