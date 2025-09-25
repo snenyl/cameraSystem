@@ -25,7 +25,7 @@ end
 function CameraSystemAttachable:attachableAddCameraSystemCameras()
   local spec = self.spec_cameraSystem
 
-  if #spec.cameras > 0 then
+  if spec ~= nil and spec.cameras ~= nil and #spec.cameras > 0 then
     local rootAttacherVehicle = self.rootVehicle
 
     if rootAttacherVehicle ~= nil and rootAttacherVehicle.addToolCameraSystemCameras ~= nil then
@@ -41,7 +41,7 @@ end
 function CameraSystemAttachable:attachableRemoveCameraSystemCameras()
   local spec = self.spec_cameraSystem
 
-  if #spec.cameras > 0 then
+  if spec ~= nil and spec.cameras ~= nil and #spec.cameras > 0 then
     local rootAttacherVehicle = self.rootVehicle
 
     if rootAttacherVehicle ~= nil and rootAttacherVehicle.removeToolCameraSystemCameras ~= nil then
