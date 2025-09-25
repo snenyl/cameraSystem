@@ -21,6 +21,7 @@ function CameraSystemDefaultVehicleData.new(customMt)
 
   self.cameraData = {}
   self.isLoaded = false
+  self.legacyFallbackWarningShown = false
 
   CameraSystemDefaultVehicleData.XML_SCHEMA = XMLSchema.new("cameraSystemDefaultVehicleData")
 
@@ -89,49 +90,78 @@ function CameraSystemDefaultVehicleData:loadDefualtVehicleCameraSystemData()
 end
 
 function CameraSystemDefaultVehicleData:overwriteGameFunctions(cameraSystem)
-  cameraSystem:overwriteGameFunction(StoreItemUtil, "getConfigurationsFromXML", function (superFunc, xmlFile, key, baseDir, customEnvironment, isMod, storeItem)
-    local configurations, defaultConfigurationIds = superFunc(xmlFile, key, baseDir, customEnvironment, isMod, storeItem)
-    local vehicleData = self:getCameraSystemDefaultData(xmlFile.filename)
+  local defaultVehicleData = self
 
-    if not self.isLoaded then
-      self:loadDefualtVehicleCameraSystemData()
-    end
+  if ConfigurationUtil ~= nil then
+    cameraSystem:overwriteGameFunction(ConfigurationUtil, "getConfigurationsFromXML", function (superFunc, manager, xmlFile, key, baseDir, customEnvironment, isMod, storeItem)
+      local configurations, defaultConfigurationIds = superFunc(manager, xmlFile, key, baseDir, customEnvironment, isMod, storeItem)
+      local vehicleManager = g_vehicleConfigurationManager
+      local useLegacyFallback = vehicleManager == nil and g_configurationManager ~= nil
+      local handlesVehicleConfigs = (vehicleManager ~= nil and manager == vehicleManager) or (useLegacyFallback and manager == g_configurationManager)
 
-    if vehicleData ~= nil then
-      if configurations == nil then
-        configurations = {}
+      if useLegacyFallback and handlesVehicleConfigs and not defaultVehicleData.legacyFallbackWarningShown then
+        Logging.warning("CameraSystem: g_vehicleConfigurationManager missing - using legacy configuration manager fallback (intended for FS22 compatibility).")
+        defaultVehicleData.legacyFallbackWarningShown = true
       end
 
-      if defaultConfigurationIds == nil then
-        defaultConfigurationIds = {}
+      if handlesVehicleConfigs then
+        if not defaultVehicleData.isLoaded then
+          defaultVehicleData:loadDefualtVehicleCameraSystemData()
+        end
+
+        local xmlFilename = nil
+
+        if type(xmlFile) == "table" then
+          xmlFilename = xmlFile.filename
+        elseif type(xmlFile) == "string" then
+          xmlFilename = xmlFile
+        end
+
+        if xmlFilename ~= nil then
+          local vehicleData = defaultVehicleData:getCameraSystemDefaultData(xmlFilename)
+
+          if vehicleData ~= nil then
+            configurations = configurations or {}
+            defaultConfigurationIds = defaultConfigurationIds or {}
+
+            local cameraConfigurations = configurations.camera
+
+            if cameraConfigurations == nil or #cameraConfigurations == 0 then
+              cameraConfigurations = {
+                {
+                  isDefault = true,
+                  saveId = "1",
+                  isSelectable = true,
+                  index = 1,
+                  dailyUpkeep = 0,
+                  price = 0,
+                  name = g_i18n:getText("configuration_valueNo"),
+                  nameCompareParams = {}
+                },
+                {
+                  isDefault = false,
+                  saveId = "2",
+                  isSelectable = true,
+                  index = 2,
+                  dailyUpkeep = 0,
+                  name = g_i18n:getText("configuration_valueYes"),
+                  price = vehicleData.price,
+                  nameCompareParams = {}
+                }
+              }
+            end
+
+            configurations.camera = cameraConfigurations
+            defaultConfigurationIds.camera = defaultConfigurationIds.camera or 1
+          end
+        end
       end
 
-      configurations.camera = {
-        {
-          isDefault = true,
-          saveId = "1",
-          isSelectable = true,
-          index = 1,
-          dailyUpkeep = 0,
-          price = 0,
-          name = g_i18n:getText("configuration_valueNo"),
-          nameCompareParams = {}
-        },
-        {
-          isDefault = false,
-          saveId = "2",
-          isSelectable = true,
-          index = 2,
-          dailyUpkeep = 0,
-          name = g_i18n:getText("configuration_valueYes"),
-          price = vehicleData.price,
-          nameCompareParams = {}
-        }
-      }
-    end
-
-    return configurations, defaultConfigurationIds
-  end)
+      return configurations, defaultConfigurationIds
+    end)
+  else
+    Logging.warning("CameraSystem: ConfigurationUtil not available - default camera configuration will not be injected.")
+  end
   cameraSystem:overwriteGameFunction(FSBaseMission, "consoleCommandReloadVehicle", function (superFunc, mission, resetVehicle, radius)
     self:loadDefualtVehicleCameraSystemData()
 
@@ -140,16 +170,28 @@ function CameraSystemDefaultVehicleData:overwriteGameFunctions(cameraSystem)
 end
 
 function CameraSystemDefaultVehicleData:getVehicleXmlFilenamePath(xmlFilename)
-  if xmlFilename:sub(1, 3) == "mod" then
+  if xmlFilename == nil then
+    return nil
+  end
+
+  if xmlFilename:sub(1, 3) == "mod" and g_modsDirectory ~= nil then
     xmlFilename = g_modsDirectory .. xmlFilename:sub(5)
   end
 
   if xmlFilename:sub(1, 3) == "dlc" then
     xmlFilename = getAppBasePath() .. "pdlc/" .. xmlFilename:sub(5)
   end
-  -- needs to be tested
+
   if xmlFilename:sub(1, 8) == "internal" then
-    xmlFilename = g_internalModsDirectory .. xmlFilename:sub(10)
+    local internalModsDirectory = g_internalModsDirectory
+
+    if internalModsDirectory == nil and g_modManager ~= nil and g_modManager.getInternalModsDirectory ~= nil then
+      internalModsDirectory = g_modManager:getInternalModsDirectory()
+    end
+
+    if internalModsDirectory ~= nil then
+      xmlFilename = internalModsDirectory .. xmlFilename:sub(10)
+    end
   end
 
   return xmlFilename
