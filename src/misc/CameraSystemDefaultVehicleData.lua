@@ -48,36 +48,46 @@ function CameraSystemDefaultVehicleData:loadDefualtVehicleCameraSystemData()
         price = xmlFile:getValue(key .. "#price", 500)
       }
 
-      if vehicle.xmlFilename ~= nil then
-        vehicle.cameras = {}
+      if vehicle.xmlFilename == nil or vehicle.xmlFilename == "" then
+        Logging.xmlWarning(xmlFile, "Missing or invalid 'xmlFilename' for vehicle entry '%s' - skipping.", key)
 
-        xmlFile:iterate(key .. ".cameras.camera", function (_, cameraKey)
-          local camera = {}
+        return
+      end
 
-          camera.nodeName = xmlFile:getValue(cameraKey .. "#nodeName")
+      vehicle.cameras = {}
 
-          if camera.nodeName == nil then
-            Logging.xmlWarning(self.xmlFile, "Missing 'nodeName' for camera '%s'!", cameraKey)
+      xmlFile:iterate(key .. ".cameras.camera", function (_, cameraKey)
+        local camera = {}
 
-            return false
-          end
+        camera.nodeName = xmlFile:getValue(cameraKey .. "#nodeName")
 
-          local visibilityNodeName = xmlFile:getValue(cameraKey .. "#visibilityNodeName")
+        if camera.nodeName == nil or camera.nodeName == "" then
+          Logging.xmlWarning(xmlFile, "Missing 'nodeName' for camera '%s' - entry ignored.", cameraKey)
 
-          if visibilityNodeName ~= "" then
-            camera.visibilityNodeName = visibilityNodeName
-          end
+          return false
+        end
 
-          camera.name = xmlFile:getValue(cameraKey .. "#name", "ui_cameraSystem_nameDefault", CameraSystemDefaultVehicleData.MOD_NAME)
-          camera.translation = xmlFile:getValue(cameraKey .. "#translation", "0 0 0", true)
-          camera.rotation = xmlFile:getValue(cameraKey .. "#rotation", "0 0 0", true)
-          camera.fov = xmlFile:getValue(cameraKey .. "#fov", 60)
-          camera.nearClip = xmlFile:getValue(cameraKey .. "#nearClip", 0.01)
-          camera.farClip = xmlFile:getValue(cameraKey .. "#farClip", 10000)
-          camera.activeFunc = xmlFile:getValue(cameraKey .. "#activeFunc")
+        local visibilityNodeName = xmlFile:getValue(cameraKey .. "#visibilityNodeName")
 
-          table.insert(vehicle.cameras, camera)
-        end)
+        if visibilityNodeName ~= "" then
+          camera.visibilityNodeName = visibilityNodeName
+        end
+
+        camera.name = xmlFile:getValue(cameraKey .. "#name", "ui_cameraSystem_nameDefault", CameraSystemDefaultVehicleData.MOD_NAME)
+        camera.translation = xmlFile:getValue(cameraKey .. "#translation", "0 0 0", true)
+        camera.rotation = xmlFile:getValue(cameraKey .. "#rotation", "0 0 0", true)
+        camera.fov = xmlFile:getValue(cameraKey .. "#fov", 60)
+        camera.nearClip = xmlFile:getValue(cameraKey .. "#nearClip", 0.01)
+        camera.farClip = xmlFile:getValue(cameraKey .. "#farClip", 10000)
+        camera.activeFunc = xmlFile:getValue(cameraKey .. "#activeFunc")
+
+        table.insert(vehicle.cameras, camera)
+      end)
+
+      if #vehicle.cameras == 0 then
+        Logging.xmlWarning(xmlFile, "Vehicle '%s' does not define any valid cameras - skipping.", vehicle.xmlFilename)
+
+        return
       end
 
       table.insert(self.cameraData, vehicle)
@@ -198,11 +208,29 @@ function CameraSystemDefaultVehicleData:getVehicleXmlFilenamePath(xmlFilename)
 end
 
 function CameraSystemDefaultVehicleData:getCameraSystemDefaultData(configFilename)
+  if configFilename == nil or configFilename == "" then
+    return nil
+  end
+
   for i = 1, #self.cameraData do
     local vehicleData = self.cameraData[i]
 
-    if configFilename:endsWith(vehicleData.xmlFilename) then
-      return vehicleData
+    if vehicleData.xmlFilename ~= nil and vehicleData.xmlFilename ~= "" then
+      if StringUtil ~= nil and StringUtil.endsWith ~= nil then
+        if StringUtil.endsWith(configFilename, vehicleData.xmlFilename) then
+          return vehicleData
+        end
+      elseif configFilename.endsWith ~= nil then
+        if configFilename:endsWith(vehicleData.xmlFilename) then
+          return vehicleData
+        end
+      else
+        local length = vehicleData.xmlFilename:len()
+
+        if length == 0 or configFilename:sub(-length) == vehicleData.xmlFilename then
+          return vehicleData
+        end
+      end
     end
   end
 end
