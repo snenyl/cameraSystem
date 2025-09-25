@@ -33,7 +33,7 @@ Weitere Informationen, ein vollständiges Änderungsprotokoll, Anweisungen zur F
 En standard, certains des <a href="https://github.com/VertexFloat/cameraSystem/blob/main/VEHICLES.md">véhicules et outils</a> disponibles à l'origine étaient équipés de configurations de caméra.
 
 Changer le mode système de la caméra (off/on) - touche "z" (par défaut)
-Appareil photo suivant/précédent - touches "shift gauche + k/m" (par défaut)
+Appareil photo suivant/précédent - touches « shift gauche + k/m » (par défaut)
 
 Journal des modifications (2.0.0.0) :
 - ajout de la prise en charge de Farming Simulator 25
@@ -50,7 +50,7 @@ Dziennik zmian (2.0.0.0):
 
 Po więcej informacji, pełny dziennik zmian, instrukcje integracji pojazdu, pomoc lub zgłoszenie błędu, odwiedź stronę <a href="https://github.com/VertexFloat/cameraSystem">GitHub</a>.]]></pl>
   </description>
-  <iconFilename>icon_cameraSystem.png</iconFilename>
+  <iconFilename>icon_cameraSystem.dds</iconFilename>
   <multiplayer supported="true"/>
 
   <l10n>
@@ -166,8 +166,8 @@ Po więcej informacji, pełny dziennik zmian, instrukcje integracji pojazdu, pom
   </specializations>
 
   <actions>
-    <action name="TOGGLE_CAMERA_SYSTEM" axisType="HALF"/>
-    <action name="TOGGLE_CAMERA_SYSTEM_CAMERA" axisType="FULL"/>
+    <action name="TOGGLE_CAMERA_SYSTEM" category="VEHICLE" axisType="HALF" ignoreComboMask="false"/>
+    <action name="TOGGLE_CAMERA_SYSTEM_CAMERA" category="VEHICLE" axisType="FULL" ignoreComboMask="false"/>
   </actions>
 
   <inputBinding>
