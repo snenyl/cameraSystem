@@ -21,7 +21,13 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "update", function (superFunc, self, dt)
     superFunc(self, dt)
 
-    for _, extension in pairs(self.vehicleHudExtensions) do
+    local vehicleHudExtensions = self.vehicleHudExtensions or self.vehicleHUDExtensions
+
+    if vehicleHudExtensions == nil then
+      return
+    end
+
+    for _, extension in pairs(vehicleHudExtensions) do
       if extension:isa(CameraSystemHUDExtension) then
         if extension:canDraw() then
           extension:update(dt)
@@ -38,7 +44,9 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
 
       inputHelpDisplay.currentAvailableHeight = inputHelpDisplay:getAvailableHeight()
 
-      inputHelpDisplay:updateHUDExtensions()
+      if inputHelpDisplay.updateHUDExtensions ~= nil then
+        inputHelpDisplay:updateHUDExtensions()
+      end
 
       if self:drawVehicleHUDExtensionss(inputHelpDisplay) then
         self:drawControlsLabels(inputHelpDisplay)
@@ -83,16 +91,24 @@ function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHe
     posY = posY + inputHelpDisplay.frameOffsetY
     local usedHeight = 0
 
-    for _, extension in pairs(inputHelpDisplay.vehicleHudExtensions) do
+    local vehicleHudExtensions = inputHelpDisplay.vehicleHudExtensions or inputHelpDisplay.vehicleHUDExtensions
+
+    if vehicleHudExtensions == nil then
+      return false
+    end
+
+    for _, extension in pairs(vehicleHudExtensions) do
       if extension:isa(CameraSystemHUDExtension) then
         local extHeight = extension:getDisplayHeight()
 
         if extension:canDraw() and usedHeight + extHeight <= inputHelpDisplay.extensionsHeight then
           posY = posY - extHeight - inputHelpDisplay.entryOffsetY
 
-          inputHelpDisplay.extensionBg:setPosition(leftPosX, posY)
-          inputHelpDisplay.extensionBg:setDimension(width, extHeight)
-          inputHelpDisplay.extensionBg:render()
+          if inputHelpDisplay.extensionBg ~= nil then
+            inputHelpDisplay.extensionBg:setPosition(leftPosX, posY)
+            inputHelpDisplay.extensionBg:setDimension(width, extHeight)
+            inputHelpDisplay.extensionBg:render()
+          end
 
           extension:draw(leftPosX + inputHelpDisplay.extraTextOffsetX, leftPosX + width + inputHelpDisplay.helpTextOffsetX, posY)
 
