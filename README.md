@@ -52,6 +52,8 @@
 
 <img src="screenshots/screenShot (1).png" alt="screenshot">
 
+> **Note:** This FS25 port keeps feature parity with the original FS22 release while updating the scripting layer and configuration for the Farming Simulator 25 engine.
+
 This modification gives the possibility of adding cameras, e.g. a discharge pipe camera or a rear view camera. You can easily switch between added cameras which are displayed as HUD.
 As standard, some of the originally available vehicles and implements were equipped with camera configurations.
 <br/>
@@ -64,13 +66,13 @@ Next/previous camera - "left shift + k/m" keys (default)
 
 ## Getting started
 
-If you want to install latest official version, you can [download](https://www.farming-simulator.com/mod.php?mod_id=274634&title=fs2022) it like other mods.
+If you want to install the original FS22 version, you can still [download it from the official ModHub](https://www.farming-simulator.com/mod.php?mod_id=274634&title=fs2022). An updated FS25 package will be provided once Giants publishes the 25-compatible ModHub entry.
 <br/>
 
 ### Prerequisites
 
-* [Farming Simulator 22 (PC)](https://www.farming-simulator.com/buy-now.php?platform=pc&code=VertexFloat)
-* [Farming Simulator 22 (PC-Download)](https://www.farming-simulator.com/buy-now.php?platform=pcdigital&code=VertexFloat)
+* Farming Simulator 25 (PC)
+* Giants Script SDK for FS25 (optional, recommended for development)
 
 ### Installation
 
