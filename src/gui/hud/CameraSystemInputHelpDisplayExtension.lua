@@ -13,7 +13,23 @@ function CameraSystemInputHelpDisplayExtension.new(customMt)
   self.isActive = false
 
   self.labelText = g_i18n:getText("ui_cameraSystem_header"):upper()
-  self.inputHelpWidth, _ = getNormalizedScreenValues(InputHelpDisplay.SIZE.HEADER[1] * g_gameSettings:getValue("uiScale"), 0)
+  local uiScale = 1
+
+  if g_gameSettings ~= nil and g_gameSettings.getValue ~= nil then
+    uiScale = g_gameSettings:getValue("uiScale") or uiScale
+  end
+
+  local headerWidth = nil
+
+  if InputHelpDisplay ~= nil and InputHelpDisplay.SIZE ~= nil and InputHelpDisplay.SIZE.HEADER ~= nil then
+    headerWidth = InputHelpDisplay.SIZE.HEADER[1]
+  elseif InputHelpDisplay ~= nil and InputHelpDisplay.WIDTH ~= nil then
+    headerWidth = InputHelpDisplay.WIDTH
+  end
+
+  headerWidth = headerWidth or 512
+
+  self.inputHelpWidth, _ = getNormalizedScreenValues(headerWidth * uiScale, 0)
 
   return self
 end
@@ -72,7 +88,13 @@ end
 
 function CameraSystemInputHelpDisplayExtension:drawControlsLabels(inputHelpDisplay)
   setTextBold(true)
-  setTextColor(unpack(InputHelpDisplay.COLOR.CONTROLS_LABEL))
+  local controlsColor = {1, 1, 1, 1}
+
+  if InputHelpDisplay ~= nil and InputHelpDisplay.COLOR ~= nil and InputHelpDisplay.COLOR.CONTROLS_LABEL ~= nil then
+    controlsColor = InputHelpDisplay.COLOR.CONTROLS_LABEL
+  end
+
+  setTextColor(unpack(controlsColor))
   setTextAlignment(RenderText.ALIGN_LEFT)
 
   local baseX, baseY = self:getInputHelpBasePosition()
@@ -135,7 +157,11 @@ function CameraSystemInputHelpDisplayExtension:getInputHelpBasePosition()
   end
 
   local xOffset = (1 - alpha) * self.inputHelpWidth
-  local posX, posY = InputHelpDisplay.getBackgroundPosition()
+  local posX, posY = 0, 0
+
+  if InputHelpDisplay ~= nil and InputHelpDisplay.getBackgroundPosition ~= nil then
+    posX, posY = InputHelpDisplay.getBackgroundPosition()
+  end
 
   return posX - xOffset, posY
 end
