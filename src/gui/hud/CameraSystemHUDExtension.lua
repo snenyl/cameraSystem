@@ -11,6 +11,12 @@ CameraSystemHUDExtension = {
   MOD_DIRECTORY = g_currentModDirectory
 }
 
+if VehicleHUDExtension == nil then
+  Logging.warning("CameraSystemHUDExtension: VehicleHUDExtension class missing - HUD overlays disabled for camera system.")
+
+  return
+end
+
 CameraSystemHUDExtension.HUD_ELEMENTS = CameraSystemHUDExtension.MOD_DIRECTORY .. "data/menu/hud/hud_elements.png"
 
 local VehicleCameraSystemHUDExtension_mt = Class(CameraSystemHUDExtension, VehicleHUDExtension)
