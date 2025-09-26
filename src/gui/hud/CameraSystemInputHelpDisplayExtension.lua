@@ -84,6 +84,22 @@ function CameraSystemInputHelpDisplayExtension.new(customMt)
 end
 
 function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSystem)
+  -- Shim: safe getter for available height across FS22/FS25
+  local function getAvailableHeightSafe(hud)
+    if hud ~= nil and type(hud.getAvailableHeight) == "function" then
+      local ok, h = pcall(hud.getAvailableHeight, hud)
+      if ok and type(h) == "number" then
+        return h
+      end
+    end
+    if hud ~= nil and type(hud.extensionsHeight) == "number" then
+      return hud.extensionsHeight
+    end
+    if hud ~= nil and type(hud.availableHeight) == "number" then
+      return hud.availableHeight
+    end
+    return 0
+  end
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "update", function (superFunc, self, dt)
     superFunc(self, dt)
 
@@ -126,11 +142,12 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
 
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "draw", function (superFunc, inputHelpDisplay)
     if not inputHelpDisplay:getVisible() then
-      local vehicleSchema = g_currentMission.hud.vehicleSchema
+      local vehicleSchema = (g_currentMission ~= nil and g_currentMission.hud ~= nil) and g_currentMission.hud.vehicleSchema or nil
 
       self.isActive = false
 
-      inputHelpDisplay.currentAvailableHeight = inputHelpDisplay:getAvailableHeight()
+    -- Cross-version safe available height
+    inputHelpDisplay.currentAvailableHeight = getAvailableHeightSafe(inputHelpDisplay)
 
       if inputHelpDisplay.updateHUDExtensions ~= nil then
         inputHelpDisplay:updateHUDExtensions()
@@ -146,7 +163,7 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
         end
       end
 
-      if not self.isActive and vehicleSchema.isDocked and vehicleSchema.animation:getFinished() and not g_cameraSystem:getIsPrecisionFarming() then
+      if vehicleSchema ~= nil and not self.isActive and vehicleSchema.isDocked and vehicleSchema.animation:getFinished() and not g_cameraSystem:getIsPrecisionFarming() then
         vehicleSchema:setDocked(false, true)
       end
     end
@@ -180,7 +197,22 @@ end
   function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHelpDisplay)
     if inputHelpDisplay.extensionsHeight > 0 then
       local leftPosX, posY = self:getInputHelpBasePosition()
-      local width = inputHelpDisplay:getWidth()
+      local width
+      if type(inputHelpDisplay.getWidth) == "function" then
+        local ok, w = pcall(inputHelpDisplay.getWidth, inputHelpDisplay)
+        if ok and type(w) == "number" then width = w end
+      end
+      if type(width) ~= "number" then
+        if InputHelpDisplay and InputHelpDisplay.SIZE and type(InputHelpDisplay.SIZE.HEADER) == "table" then
+          width = InputHelpDisplay.SIZE.HEADER[1]
+        elseif InputHelpDisplay and type(InputHelpDisplay.WIDTH) == "number" then
+          width = InputHelpDisplay.WIDTH
+        elseif InputHelpDisplay and type(InputHelpDisplay.DEFAULT_WIDTH) == "number" then
+          width = InputHelpDisplay.DEFAULT_WIDTH
+        else
+          width = 512
+        end
+      end
 
     posY = posY + inputHelpDisplay.frameOffsetY
     local usedHeight = 0
