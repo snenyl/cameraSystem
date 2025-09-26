@@ -87,7 +87,29 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "update", function (superFunc, self, dt)
     superFunc(self, dt)
 
-    local vehicleHudExtensions = self.vehicleHudExtensions or self.vehicleHUDExtensions
+    -- Normalize FS22/FS25 field name once and reuse
+    if self.vehicleHudExtensionsRef == nil then
+      local ref = nil
+
+      if self.vehicleHudExtensions ~= nil then
+        ref = self.vehicleHudExtensions
+      elseif self.vehicleHUDExtensions ~= nil then
+        ref = self.vehicleHUDExtensions
+      end
+
+      -- One-time dump to help identify the correct field
+      if self.__vehHudExtDumpDone ~= true then
+        Logging.info("DEBUG: InputHelpDisplay vehicle HUD extensions field chosen = %s",
+          (self.vehicleHudExtensions ~= nil and "vehicleHudExtensions")
+            or (self.vehicleHUDExtensions ~= nil and "vehicleHUDExtensions")
+            or "<none>")
+        self.__vehHudExtDumpDone = true
+      end
+
+      self.vehicleHudExtensionsRef = ref
+    end
+
+    local vehicleHudExtensions = self.vehicleHudExtensionsRef
 
     if vehicleHudExtensions == nil then
       return
@@ -155,15 +177,36 @@ function CameraSystemInputHelpDisplayExtension:drawControlsLabels(inputHelpDispl
   renderText(posX, posY, inputHelpDisplay.controlsLabelTextSize, self.labelText)
 end
 
-function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHelpDisplay)
-  if inputHelpDisplay.extensionsHeight > 0 then
-    local leftPosX, posY = self:getInputHelpBasePosition()
-    local width = inputHelpDisplay:getWidth()
+  function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHelpDisplay)
+    if inputHelpDisplay.extensionsHeight > 0 then
+      local leftPosX, posY = self:getInputHelpBasePosition()
+      local width = inputHelpDisplay:getWidth()
 
     posY = posY + inputHelpDisplay.frameOffsetY
     local usedHeight = 0
 
-    local vehicleHudExtensions = inputHelpDisplay.vehicleHudExtensions or inputHelpDisplay.vehicleHUDExtensions
+    -- Normalize field name on inputHelpDisplay once and reuse
+    if inputHelpDisplay.vehicleHudExtensionsRef == nil then
+      local ref = nil
+
+      if inputHelpDisplay.vehicleHudExtensions ~= nil then
+        ref = inputHelpDisplay.vehicleHudExtensions
+      elseif inputHelpDisplay.vehicleHUDExtensions ~= nil then
+        ref = inputHelpDisplay.vehicleHUDExtensions
+      end
+
+      if inputHelpDisplay.__vehHudExtDumpDone ~= true then
+        Logging.info("DEBUG: inputHelpDisplay HUD extensions field chosen = %s",
+          (inputHelpDisplay.vehicleHudExtensions ~= nil and "vehicleHudExtensions")
+            or (inputHelpDisplay.vehicleHUDExtensions ~= nil and "vehicleHUDExtensions")
+            or "<none>")
+        inputHelpDisplay.__vehHudExtDumpDone = true
+      end
+
+      inputHelpDisplay.vehicleHudExtensionsRef = ref
+    end
+
+    local vehicleHudExtensions = inputHelpDisplay.vehicleHudExtensionsRef
 
     if vehicleHudExtensions == nil then
       return false
