@@ -12,7 +12,13 @@ function CameraSystemInputHelpDisplayExtension.new(customMt)
 
   self.isActive = false
 
-  self.labelText = g_i18n:getText("ui_cameraSystem_header"):upper()
+  local headerLabel = g_i18n:getText("ui_cameraSystem_header")
+
+  if type(headerLabel) ~= "string" then
+    headerLabel = "Camera System"
+  end
+
+  self.labelText = headerLabel:upper()
   local uiScale = 1
 
   if g_gameSettings ~= nil and g_gameSettings.getValue ~= nil then
@@ -21,15 +27,58 @@ function CameraSystemInputHelpDisplayExtension.new(customMt)
 
   local headerWidth = nil
 
-  if InputHelpDisplay ~= nil and InputHelpDisplay.SIZE ~= nil and InputHelpDisplay.SIZE.HEADER ~= nil then
-    headerWidth = InputHelpDisplay.SIZE.HEADER[1]
-  elseif InputHelpDisplay ~= nil and InputHelpDisplay.WIDTH ~= nil then
-    headerWidth = InputHelpDisplay.WIDTH
+  if InputHelpDisplay ~= nil and type(InputHelpDisplay.SIZE) == "table" then
+    local size = InputHelpDisplay.SIZE
+
+    if type(size.HEADER) == "table" then
+      headerWidth = size.HEADER[1]
+    elseif type(size.HEADER_WIDTH) == "number" then
+      headerWidth = size.HEADER_WIDTH
+    end
+
+    if headerWidth == nil then
+      local widthFallback = InputHelpDisplay.WIDTH
+        or InputHelpDisplay.DEFAULT_WIDTH
+        or InputHelpDisplay.MAX_WIDTH
+
+      if type(widthFallback) == "number" then
+        headerWidth = widthFallback
+      end
+    end
   end
 
   headerWidth = headerWidth or 512
 
   self.inputHelpWidth, _ = getNormalizedScreenValues(headerWidth * uiScale, 0)
+
+  -- Optional one-time debug of InputHelpDisplay structure for FS25 vs FS22
+  if g_modIsLoaded == nil or self.__debugDumpDone ~= true then
+    if InputHelpDisplay ~= nil then
+      if table ~= nil and table.keys ~= nil then
+        local ok, keys = pcall(table.keys, InputHelpDisplay)
+        if ok and type(keys) == "table" and #keys > 0 then
+          Logging.info("DEBUG: InputHelpDisplay keys = %s", table.concat(keys, ", "))
+        end
+      else
+        -- Minimal fallback: iterate keys without ordering
+        local list = {}
+        for k, _ in pairs(InputHelpDisplay) do
+          table.insert(list, tostring(k))
+        end
+        if #list > 0 then
+          Logging.info("DEBUG: InputHelpDisplay keys = %s", table.concat(list, ", "))
+        end
+      end
+
+      if type(InputHelpDisplay.SIZE) == "table" then
+        for k, v in pairs(InputHelpDisplay.SIZE) do
+          Logging.info("DEBUG: InputHelpDisplay.SIZE[%s] = %s", tostring(k), tostring(v))
+        end
+      end
+    end
+
+    self.__debugDumpDone = true
+  end
 
   return self
 end
