@@ -105,45 +105,23 @@ function CameraSystem:loadCameraFromConfig(camerasData)
 
   for i = 1, #camerasData do
     local cameraData = camerasData[i]
-    local cameraConfig = {}
 
-    for key, value in pairs(cameraData) do
-      cameraConfig[key] = value
-    end
-
-    local skipCamera = false
-
-    if cameraConfig.nodeName ~= nil and self.i3dMappings[cameraConfig.nodeName] ~= nil then
-      local mappedNode = self.i3dMappings[cameraConfig.nodeName]
-
-      if mappedNode ~= nil then
-        local nodeVisible = getVisibility(mappedNode.nodeId)
-
-        if not nodeVisible then
-          skipCamera = true
-        else
-          if cameraConfig.visibilityNodeName ~= nil then
-            local visibilityMapping = self.i3dMappings[cameraConfig.visibilityNodeName]
-
-            if visibilityMapping ~= nil and not getVisibility(visibilityMapping.nodeId) then
-              skipCamera = true
-            end
-          end
-
-          if not skipCamera then
-            cameraConfig.node = mappedNode.nodeId
-          end
-        end
+    if cameraData.nodeName ~= nil and self.i3dMappings[cameraData.nodeName] ~= nil then
+      -- we check the visibility due to different configurations (e.g. pipe length) and if the node is hidden, we do not create a camera for this node
+      if not getVisibility(self.i3dMappings[cameraData.nodeName].nodeId) or cameraData.visibilityNodeName ~= nil and self.i3dMappings[cameraData.visibilityNodeName] ~= nil and not getVisibility(self.i3dMappings[cameraData.visibilityNodeName].nodeId) then
+        goto continue
       end
+
+      cameraData.node = self.i3dMappings[cameraData.nodeName].nodeId
     end
 
-    if not skipCamera then
-      local camera = VehicleRenderCamera.new(self)
+    local camera = VehicleRenderCamera.new(self)
 
-      if camera:loadFromConfig(cameraConfig) then
-        table.insert(spec.cameras, camera)
-      end
+    if camera:loadFromConfig(cameraData) then
+      table.insert(spec.cameras, camera)
     end
+
+    ::continue::
   end
 
   spec.numCameras = #spec.cameras

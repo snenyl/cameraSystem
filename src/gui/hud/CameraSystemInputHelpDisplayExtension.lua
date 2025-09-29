@@ -12,120 +12,17 @@ function CameraSystemInputHelpDisplayExtension.new(customMt)
 
   self.isActive = false
 
-  local headerLabel = g_i18n:getText("ui_cameraSystem_header")
-
-  if type(headerLabel) ~= "string" then
-    headerLabel = "Camera System"
-  end
-
-  self.labelText = headerLabel:upper()
-  local uiScale = 1
-
-  if g_gameSettings ~= nil and g_gameSettings.getValue ~= nil then
-    uiScale = g_gameSettings:getValue("uiScale") or uiScale
-  end
-
-  local headerWidth = nil
-
-  if InputHelpDisplay ~= nil and type(InputHelpDisplay.SIZE) == "table" then
-    local size = InputHelpDisplay.SIZE
-
-    if type(size.HEADER) == "table" then
-      headerWidth = size.HEADER[1]
-    elseif type(size.HEADER_WIDTH) == "number" then
-      headerWidth = size.HEADER_WIDTH
-    end
-
-    if headerWidth == nil then
-      local widthFallback = InputHelpDisplay.WIDTH
-        or InputHelpDisplay.DEFAULT_WIDTH
-        or InputHelpDisplay.MAX_WIDTH
-
-      if type(widthFallback) == "number" then
-        headerWidth = widthFallback
-      end
-    end
-  end
-
-  headerWidth = headerWidth or 512
-
-  self.inputHelpWidth, _ = getNormalizedScreenValues(headerWidth * uiScale, 0)
-
-  -- Optional one-time debug of InputHelpDisplay structure for FS25 vs FS22
-  if g_modIsLoaded == nil or self.__debugDumpDone ~= true then
-    if InputHelpDisplay ~= nil then
-      if table ~= nil and table.keys ~= nil then
-        local ok, keys = pcall(table.keys, InputHelpDisplay)
-        if ok and type(keys) == "table" and #keys > 0 then
-          Logging.info("DEBUG: InputHelpDisplay keys = %s", table.concat(keys, ", "))
-        end
-      else
-        -- Minimal fallback: iterate keys without ordering
-        local list = {}
-        for k, _ in pairs(InputHelpDisplay) do
-          table.insert(list, tostring(k))
-        end
-        if #list > 0 then
-          Logging.info("DEBUG: InputHelpDisplay keys = %s", table.concat(list, ", "))
-        end
-      end
-
-      if type(InputHelpDisplay.SIZE) == "table" then
-        for k, v in pairs(InputHelpDisplay.SIZE) do
-          Logging.info("DEBUG: InputHelpDisplay.SIZE[%s] = %s", tostring(k), tostring(v))
-        end
-      end
-    end
-
-    self.__debugDumpDone = true
-  end
+  self.labelText = g_i18n:getText("ui_cameraSystem_header"):upper()
+  self.inputHelpWidth, _ = getNormalizedScreenValues(InputHelpDisplay.SIZE.HEADER[1] * g_gameSettings:getValue("uiScale"), 0)
 
   return self
 end
 
 function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSystem)
-  -- Shim: safe getter for available height across FS22/FS25
-  local function getAvailableHeightSafe(hud)
-    if hud ~= nil and type(hud.getAvailableHeight) == "function" then
-      local ok, h = pcall(hud.getAvailableHeight, hud)
-      if ok and type(h) == "number" then
-        return h
-      end
-    end
-    if hud ~= nil and type(hud.extensionsHeight) == "number" then
-      return hud.extensionsHeight
-    end
-    if hud ~= nil and type(hud.availableHeight) == "number" then
-      return hud.availableHeight
-    end
-    return 0
-  end
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "update", function (superFunc, self, dt)
     superFunc(self, dt)
 
-    -- Normalize FS22/FS25 field name once and reuse
-    if self.vehicleHudExtensionsRef == nil then
-      local ref = nil
-
-      if self.vehicleHudExtensions ~= nil then
-        ref = self.vehicleHudExtensions
-      elseif self.vehicleHUDExtensions ~= nil then
-        ref = self.vehicleHUDExtensions
-      end
-
-      -- One-time dump to help identify the correct field
-      if self.__vehHudExtDumpDone ~= true then
-        Logging.info("DEBUG: InputHelpDisplay vehicle HUD extensions field chosen = %s",
-          (self.vehicleHudExtensions ~= nil and "vehicleHudExtensions")
-            or (self.vehicleHUDExtensions ~= nil and "vehicleHUDExtensions")
-            or "<none>")
-        self.__vehHudExtDumpDone = true
-      end
-
-      self.vehicleHudExtensionsRef = ref
-    end
-
-    local vehicleHudExtensions = self.vehicleHudExtensionsRef
+    local vehicleHudExtensions = self.vehicleHudExtensions or self.vehicleHUDExtensions
 
     if vehicleHudExtensions == nil then
       return
@@ -142,12 +39,11 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
 
   cameraSystem:overwriteGameFunction(InputHelpDisplay, "draw", function (superFunc, inputHelpDisplay)
     if not inputHelpDisplay:getVisible() then
-      local vehicleSchema = (g_currentMission ~= nil and g_currentMission.hud ~= nil) and g_currentMission.hud.vehicleSchema or nil
+      local vehicleSchema = g_currentMission.hud.vehicleSchema
 
       self.isActive = false
 
-    -- Cross-version safe available height
-    inputHelpDisplay.currentAvailableHeight = getAvailableHeightSafe(inputHelpDisplay)
+      inputHelpDisplay.currentAvailableHeight = inputHelpDisplay:getAvailableHeight()
 
       if inputHelpDisplay.updateHUDExtensions ~= nil then
         inputHelpDisplay:updateHUDExtensions()
@@ -163,7 +59,7 @@ function CameraSystemInputHelpDisplayExtension:overwriteGameFunctions(cameraSyst
         end
       end
 
-      if vehicleSchema ~= nil and not self.isActive and vehicleSchema.isDocked and vehicleSchema.animation:getFinished() and not g_cameraSystem:getIsPrecisionFarming() then
+      if not self.isActive and vehicleSchema.isDocked and vehicleSchema.animation:getFinished() and not g_cameraSystem:getIsPrecisionFarming() then
         vehicleSchema:setDocked(false, true)
       end
     end
@@ -176,13 +72,7 @@ end
 
 function CameraSystemInputHelpDisplayExtension:drawControlsLabels(inputHelpDisplay)
   setTextBold(true)
-  local controlsColor = {1, 1, 1, 1}
-
-  if InputHelpDisplay ~= nil and InputHelpDisplay.COLOR ~= nil and InputHelpDisplay.COLOR.CONTROLS_LABEL ~= nil then
-    controlsColor = InputHelpDisplay.COLOR.CONTROLS_LABEL
-  end
-
-  setTextColor(unpack(controlsColor))
+  setTextColor(unpack(InputHelpDisplay.COLOR.CONTROLS_LABEL))
   setTextAlignment(RenderText.ALIGN_LEFT)
 
   local baseX, baseY = self:getInputHelpBasePosition()
@@ -194,51 +84,15 @@ function CameraSystemInputHelpDisplayExtension:drawControlsLabels(inputHelpDispl
   renderText(posX, posY, inputHelpDisplay.controlsLabelTextSize, self.labelText)
 end
 
-  function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHelpDisplay)
-    if inputHelpDisplay.extensionsHeight > 0 then
-      local leftPosX, posY = self:getInputHelpBasePosition()
-      local width
-      if type(inputHelpDisplay.getWidth) == "function" then
-        local ok, w = pcall(inputHelpDisplay.getWidth, inputHelpDisplay)
-        if ok and type(w) == "number" then width = w end
-      end
-      if type(width) ~= "number" then
-        if InputHelpDisplay and InputHelpDisplay.SIZE and type(InputHelpDisplay.SIZE.HEADER) == "table" then
-          width = InputHelpDisplay.SIZE.HEADER[1]
-        elseif InputHelpDisplay and type(InputHelpDisplay.WIDTH) == "number" then
-          width = InputHelpDisplay.WIDTH
-        elseif InputHelpDisplay and type(InputHelpDisplay.DEFAULT_WIDTH) == "number" then
-          width = InputHelpDisplay.DEFAULT_WIDTH
-        else
-          width = 512
-        end
-      end
+function CameraSystemInputHelpDisplayExtension:drawVehicleHUDExtensionss(inputHelpDisplay)
+  if inputHelpDisplay.extensionsHeight > 0 then
+    local leftPosX, posY = self:getInputHelpBasePosition()
+    local width = inputHelpDisplay:getWidth()
 
     posY = posY + inputHelpDisplay.frameOffsetY
     local usedHeight = 0
 
-    -- Normalize field name on inputHelpDisplay once and reuse
-    if inputHelpDisplay.vehicleHudExtensionsRef == nil then
-      local ref = nil
-
-      if inputHelpDisplay.vehicleHudExtensions ~= nil then
-        ref = inputHelpDisplay.vehicleHudExtensions
-      elseif inputHelpDisplay.vehicleHUDExtensions ~= nil then
-        ref = inputHelpDisplay.vehicleHUDExtensions
-      end
-
-      if inputHelpDisplay.__vehHudExtDumpDone ~= true then
-        Logging.info("DEBUG: inputHelpDisplay HUD extensions field chosen = %s",
-          (inputHelpDisplay.vehicleHudExtensions ~= nil and "vehicleHudExtensions")
-            or (inputHelpDisplay.vehicleHUDExtensions ~= nil and "vehicleHUDExtensions")
-            or "<none>")
-        inputHelpDisplay.__vehHudExtDumpDone = true
-      end
-
-      inputHelpDisplay.vehicleHudExtensionsRef = ref
-    end
-
-    local vehicleHudExtensions = inputHelpDisplay.vehicleHudExtensionsRef
+    local vehicleHudExtensions = inputHelpDisplay.vehicleHudExtensions or inputHelpDisplay.vehicleHUDExtensions
 
     if vehicleHudExtensions == nil then
       return false
@@ -281,11 +135,7 @@ function CameraSystemInputHelpDisplayExtension:getInputHelpBasePosition()
   end
 
   local xOffset = (1 - alpha) * self.inputHelpWidth
-  local posX, posY = 0, 0
-
-  if InputHelpDisplay ~= nil and InputHelpDisplay.getBackgroundPosition ~= nil then
-    posX, posY = InputHelpDisplay.getBackgroundPosition()
-  end
+  local posX, posY = InputHelpDisplay.getBackgroundPosition()
 
   return posX - xOffset, posY
 end
