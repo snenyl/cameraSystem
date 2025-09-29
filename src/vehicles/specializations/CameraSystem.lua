@@ -10,23 +10,45 @@ function CameraSystem.prerequisitesPresent(specializations)
 end
 
 function CameraSystem.initSpecialization()
-  local configurationManager = g_vehicleConfigurationManager
+  local configurationManager = g_vehicleConfigurationManager or g_configurationManager
 
   if configurationManager ~= nil then
-    configurationManager:addConfigurationType("camera", g_i18n:getText("configuration_cameraSystem"), "cameraSystem", nil, nil, nil, ConfigurationUtil.SELECTOR_MULTIOPTION)
-  elseif g_configurationManager ~= nil then
-    Logging.warning("CameraSystem: g_vehicleConfigurationManager missing - using legacy g_configurationManager fallback (intended for FS22).")
-    g_configurationManager:addConfigurationType("camera", g_i18n:getText("configuration_cameraSystem"), "cameraSystem", nil, nil, nil, ConfigurationUtil.SELECTOR_MULTIOPTION)
+    -- Resolve VEHICLE itemClass robustly across FS versions
+    local itemClass = nil
+    if configurationManager.ITEM_CLASS ~= nil and configurationManager.ITEM_CLASS.VEHICLE ~= nil then
+      itemClass = configurationManager.ITEM_CLASS.VEHICLE
+    elseif _G.ConfigurationManager ~= nil and ConfigurationManager.ITEM_CLASS ~= nil and ConfigurationManager.ITEM_CLASS.VEHICLE ~= nil then
+      itemClass = ConfigurationManager.ITEM_CLASS.VEHICLE
+    elseif _G.ConfigurationUtil ~= nil and ConfigurationUtil.ITEM_CLASS ~= nil and ConfigurationUtil.ITEM_CLASS.VEHICLE ~= nil then
+      itemClass = ConfigurationUtil.ITEM_CLASS.VEHICLE
+    else
+      itemClass = 1 -- fallback; VEHICLE is typically 1
+      Logging.warning("CameraSystem: VEHICLE itemClass not found; using fallback 1.")
+    end
+
+    -- Register once
+    if not CameraSystem._configTypeRegistered then
+      configurationManager:addConfigurationType(
+        "camera",
+        g_i18n:getText("configuration_cameraSystem"),
+        "cameraSystem",
+        itemClass,
+        nil,   -- subConfigurationTitle
+        nil,   -- getSubConfigurationValuesFunc
+        nil,   -- getItemsBySubConfigurationIdentifierFunc
+        0      -- priority
+      )
+      CameraSystem._configTypeRegistered = true
+    end
   else
-    Logging.warning("CameraSystem: Failed to locate configuration manager to register camera configuration type.")
+    Logging.warning("CameraSystem: configuration manager unavailable; camera configuration type not registered.")
   end
 
+  -- XML schema registration (unchanged)
   local schema = Vehicle.xmlSchema
-
   if schema == nil and Vehicle.xmlSchemaRegistration ~= nil then
     schema = Vehicle.xmlSchemaRegistration
   end
-
   if schema ~= nil then
     schema:setXMLSpecializationType("CameraSystem")
     VehicleRenderCamera.registerCameraXMLPaths(schema, "vehicle.cameraSystem.cameraConfigurations.cameraConfiguration(?).camera(?)")
