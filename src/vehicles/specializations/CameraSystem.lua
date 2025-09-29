@@ -98,44 +98,48 @@ function CameraSystem:loadCameraFromXML(xmlFile, configKey, savegame)
   spec.numCameras = #spec.cameras
 end
 
+-- Minimal, label-free, defensive. Copy-paste ready.
 function CameraSystem:loadCameraFromConfig(camerasData)
   local spec = self.spec_cameraSystem
-
   spec.cameras = {}
 
-  -- Defensive: handle nil configuration
-  if camerasData == nil or type(camerasData) ~= "table" then
-    Logging.warning("CameraSystem: loadCameraFromConfig called with nil or invalid camerasData; skipping.")
-    spec.numCameras = #spec.cameras
+  if type(camerasData) ~= "table" then
+    Logging.warning("CameraSystem: loadCameraFromConfig called with invalid camerasData; skipping.")
+    spec.numCameras = 0
     return
   end
 
   for i = 1, #camerasData do
     local cameraData = camerasData[i]
+    local nodeId = nil
 
-    local skip = false -- replace use of goto with a skip flag (Lua 5.1 portable)
-
-    if cameraData ~= nil and cameraData.nodeName ~= nil and self.i3dMappings ~= nil and self.i3dMappings[cameraData.nodeName] ~= nil then
-      -- We check visibility due to different configurations (e.g. pipe length).
-      -- If the node is hidden, we do not create a camera for this node.
+    if cameraData ~= nil and cameraData.nodeName ~= nil and self.i3dMappings ~= nil then
       local nodeEntry = self.i3dMappings[cameraData.nodeName]
-      local nodeVisible = nodeEntry ~= nil and nodeEntry.nodeId ~= nil and getVisibility(nodeEntry.nodeId)
-      local visOk = true
-      if cameraData.visibilityNodeName ~= nil and self.i3dMappings[cameraData.visibilityNodeName] ~= nil then
-        local vEntry = self.i3dMappings[cameraData.visibilityNodeName]
-        visOk = vEntry ~= nil and vEntry.nodeId ~= nil and getVisibility(vEntry.nodeId)
+      if nodeEntry ~= nil then
+        nodeId = nodeEntry.nodeId
       end
-      if not nodeVisible or not visOk then
-        skip = true
-      else
-        cameraData.node = nodeEntry.nodeId
+
+      -- Visibility gate
+      if nodeId ~= nil then
+        local mainVisible = getVisibility(nodeId)
+        local visOk = true
+        if cameraData.visibilityNodeName ~= nil then
+          local vEntry = self.i3dMappings[cameraData.visibilityNodeName]
+          if vEntry ~= nil and vEntry.nodeId ~= nil then
+            visOk = getVisibility(vEntry.nodeId)
+          end
+        end
+        if not mainVisible or not visOk then
+          nodeId = nil
+        end
       end
     end
 
-    if not skip then
-      local camera = VehicleRenderCamera.new(self)
-      if camera ~= nil and camera.loadFromConfig ~= nil and camera:loadFromConfig(cameraData) then
-        table.insert(spec.cameras, camera)
+    if nodeId ~= nil then
+      cameraData.node = nodeId
+      local cam = VehicleRenderCamera.new(self)
+      if cam ~= nil and cam.loadFromConfig ~= nil and cam:loadFromConfig(cameraData) then
+        table.insert(spec.cameras, cam)
       end
     end
   end
