@@ -13,9 +13,10 @@ CameraSystemHUDExtension = {
 }
 
 if VehicleHUDExtension == nil then
-  Logging.warning("CameraSystemHUDExtension: VehicleHUDExtension class missing - HUD overlays disabled for camera system.")
-
-  return
+  Logging.warning("CameraSystemHUDExtension: VehicleHUDExtension API unavailable - running without overlays.")
+  -- Provide a minimal stub so other code can reference this symbol safely.
+  CameraSystemHUDExtension = { MOD_DIRECTORY = g_currentModDirectory }
+  return CameraSystemHUDExtension
 end
 
 CameraSystemHUDExtension.HUD_ELEMENTS = CameraSystemHUDExtension.MOD_DIRECTORY .. "data/menu/hud/hud_elements.png"

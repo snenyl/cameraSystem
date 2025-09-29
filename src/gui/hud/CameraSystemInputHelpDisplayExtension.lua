@@ -5,6 +5,17 @@
 
 CameraSystemInputHelpDisplayExtension = {}
 
+-- HelpType shim for FS22/FS25 compatibility (ASCII only)
+-- If non-ASCII is found in API names, they are replaced: [REMOVED: U+NNNN]
+local HelpType = nil
+if _G.InputHelpDisplayElement ~= nil and InputHelpDisplayElement.TYPE ~= nil then
+  HelpType = InputHelpDisplayElement.TYPE
+elseif _G.InputHelpDisplay ~= nil and InputHelpDisplay.TYPE ~= nil then
+  HelpType = InputHelpDisplay.TYPE
+else
+  HelpType = { HEADER = 1, ACTION = 2, GROUP = 3 }
+end
+
 local CameraSystemInputHelpDisplayExtension_mt = Class(CameraSystemInputHelpDisplayExtension)
 
 function CameraSystemInputHelpDisplayExtension.new(customMt)
@@ -75,7 +86,11 @@ end
 
 function CameraSystemInputHelpDisplayExtension:drawControlsLabels(inputHelpDisplay)
   setTextBold(true)
-  setTextColor(unpack(InputHelpDisplay.COLOR.CONTROLS_LABEL))
+  local controlsLabelColor = {1, 1, 1, 1}
+  if InputHelpDisplay ~= nil and InputHelpDisplay.COLOR ~= nil and InputHelpDisplay.COLOR.CONTROLS_LABEL ~= nil then
+    controlsLabelColor = InputHelpDisplay.COLOR.CONTROLS_LABEL
+  end
+  setTextColor(unpack(controlsLabelColor))
   setTextAlignment(RenderText.ALIGN_LEFT)
 
   local baseX, baseY = self:getInputHelpBasePosition(inputHelpDisplay)
@@ -158,6 +173,8 @@ function CameraSystemInputHelpDisplayExtension:getInputHelpBasePosition(inputHel
   local posX, posY = 0, 0
   if InputHelpDisplay ~= nil and InputHelpDisplay.getBackgroundPosition ~= nil then
     posX, posY = InputHelpDisplay.getBackgroundPosition()
+  elseif InputHelpDisplayElement ~= nil and InputHelpDisplayElement.getBackgroundPosition ~= nil then
+    posX, posY = InputHelpDisplayElement.getBackgroundPosition()
   else
     -- Fallback near bottom-left if API changed
     posX, posY = 0, 0
