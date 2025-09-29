@@ -108,29 +108,24 @@ function CameraSystemEnterable:onRegisterActionEvents(isActiveForInput, isActive
 end
 
 function CameraSystemEnterable:actionEventCameraSystemState(actionName, inputValue, callbackState, isAnalog)
-  Logging.info(string.format("CameraSystemEnterable: received '%s' (default key: Z) with value %.3f.",
-  tostring(actionName), value))
-
+  Logging.info(string.format(
+    "CameraSystemEnterable: received '%s' (default key: Z) with value %.3f.",
+    tostring(actionName), inputValue or 0.0
+  ))
   self:setCameraSystemState()
 end
 
 function CameraSystemEnterable:setCameraSystemState()
   local spec = self.spec_cameraSystemEnterable
-  local state = nil
+  local newState = (spec.currentCameraSystemState == CameraSystemEnterable.STATE.OFF)
+    and CameraSystemEnterable.STATE.ON or CameraSystemEnterable.STATE.OFF
 
-  Logging.info("CameraSystemEnterable: Camera system state is now %s", (newState == CameraSystemEnterable.STATE.ON and
-   "ON" or "OFF"))
-
-
-  if spec.currentCameraSystemState == CameraSystemEnterable.STATE.OFF then
-    state = CameraSystemEnterable.STATE.ON
-  else
-    state = CameraSystemEnterable.STATE.OFF
-  end
-
-  if spec.currentCameraSystemState ~= state then
-    spec.currentCameraSystemState = state
-
+  if spec.currentCameraSystemState ~= newState then
+    spec.currentCameraSystemState = newState
+    Logging.info(string.format(
+      "CameraSystemEnterable: Camera system state is now %s",
+      (newState == CameraSystemEnterable.STATE.ON) and "ON" or "OFF"
+    ))
     if self.isClient then
       CameraSystemEnterable.updateActionEvents(self)
     end
@@ -139,35 +134,37 @@ end
 
 function CameraSystemEnterable:actionEventCameraSystemCameraSwitch(actionName, inputValue, callbackState, isAnalog)
   local spec = self.spec_cameraSystemEnterable
-
-  Logging.info(string.format("CameraSystemEnterable: received '%s' via %s (value %.3f, current index %d).", tostring(actionName), comboName, value, spec.camIndex))
-
-  self:setActiveCameraSystemCameraIndex(spec.camIndex + MathUtil.sign(inputValue))
+  local step = MathUtil.sign(inputValue or 0)
+  if step == 0 then
+    return
+  end
+  local oldIndex = spec.camIndex
+  Logging.info(string.format(
+    "CameraSystemEnterable: received '%s' with value %.3f, current index %d.",
+    tostring(actionName), inputValue or 0.0, oldIndex
+  ))
+  self:setActiveCameraSystemCameraIndex(oldIndex + step)
 end
 
 function CameraSystemEnterable:setActiveCameraSystemCameraIndex(index)
   local spec = self.spec_cameraSystemEnterable
   local numCameras = getCameraSystemCameraCount(self)
+  local oldIndex = spec.camIndex
 
   spec.camIndex = index
-
   if numCameras == 0 then
     spec.camIndex = 1
     spec.activeCamera = nil
-
     return
   end
-
   if spec.camIndex <= 0 then
     spec.camIndex = numCameras
   end
-
   if numCameras < spec.camIndex then
     spec.camIndex = 1
   end
 
   local cameraSystemSpec = self.spec_cameraSystem
-
   if cameraSystemSpec ~= nil and cameraSystemSpec.cameras ~= nil then
     spec.activeCamera = cameraSystemSpec.cameras[spec.camIndex]
   else
@@ -175,9 +172,11 @@ function CameraSystemEnterable:setActiveCameraSystemCameraIndex(index)
   end
 
   if oldIndex ~= spec.camIndex then
-    Logging.info(string.format("CameraSystemEnterable: Active camera index changed %d -> %d (total %d)", oldIndex, spec.camIndex, numCameras))
+    Logging.info(string.format(
+      "CameraSystemEnterable: Active camera index changed %d -> %d (total %d)",
+      oldIndex, spec.camIndex, numCameras
+    ))
   end
-
 end
 
 function CameraSystemEnterable:addToolCameraSystemCameras(cameras)
