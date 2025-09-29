@@ -1,0 +1,36 @@
+<vehicle xmlFilename="data/vehicles/volvo/l120H/l120H.xml" price="500">
+    <cameras>
+        <!-- Rear view, triggers in reverse -->
+        <camera
+                nodeName="trailerAttacherJointBack"
+                name="$l10n_ui_cameraSystem_nameRear"
+                activeFunc="getCameraSystemIsReverse"
+                rotation="0 180 0"
+                translation="0 1.2 0.6"
+                fov="65" nearClip="0.03" farClip="1000"/>
+
+        <!-- Work-area view, follows the tool -->
+        <camera
+                nodeName="armAttacher"
+                name="$l10n_ui_cameraSystem_nameWork"
+                rotation="-25 0 0"
+                translation="0 0.20 -0.60"
+                fov="70" nearClip="0.02" farClip="200"/>
+
+        <!-- High cab/roof view -->
+        <camera
+                nodeName="beaconLightOrangeMount"
+                name="$l10n_ui_cameraSystem_nameCab"
+                rotation="-20 0 0"
+                translation="0 0.4 0.0"
+                fov="75" nearClip="0.03" farClip="500"/>
+
+        <!-- Front bumper camera -->
+        <camera
+                nodeName="frontLightLow"
+                name="$l10n_ui_cameraSystem_nameFront"
+                rotation="0 0 0"
+                translation="0 0.15 0.3"
+                fov="80" nearClip="0.02" farClip="300"/>
+    </cameras>
+</vehicle>
