@@ -103,25 +103,41 @@ function CameraSystem:loadCameraFromConfig(camerasData)
 
   spec.cameras = {}
 
+  -- Defensive: handle nil configuration
+  if camerasData == nil or type(camerasData) ~= "table" then
+    Logging.warning("CameraSystem: loadCameraFromConfig called with nil or invalid camerasData; skipping.")
+    spec.numCameras = #spec.cameras
+    return
+  end
+
   for i = 1, #camerasData do
     local cameraData = camerasData[i]
 
-    if cameraData.nodeName ~= nil and self.i3dMappings[cameraData.nodeName] ~= nil then
-      -- we check the visibility due to different configurations (e.g. pipe length) and if the node is hidden, we do not create a camera for this node
-      if not getVisibility(self.i3dMappings[cameraData.nodeName].nodeId) or cameraData.visibilityNodeName ~= nil and self.i3dMappings[cameraData.visibilityNodeName] ~= nil and not getVisibility(self.i3dMappings[cameraData.visibilityNodeName].nodeId) then
-        goto continue
+    local skip = false -- replace use of goto with a skip flag (Lua 5.1 portable)
+
+    if cameraData ~= nil and cameraData.nodeName ~= nil and self.i3dMappings ~= nil and self.i3dMappings[cameraData.nodeName] ~= nil then
+      -- We check visibility due to different configurations (e.g. pipe length).
+      -- If the node is hidden, we do not create a camera for this node.
+      local nodeEntry = self.i3dMappings[cameraData.nodeName]
+      local nodeVisible = nodeEntry ~= nil and nodeEntry.nodeId ~= nil and getVisibility(nodeEntry.nodeId)
+      local visOk = true
+      if cameraData.visibilityNodeName ~= nil and self.i3dMappings[cameraData.visibilityNodeName] ~= nil then
+        local vEntry = self.i3dMappings[cameraData.visibilityNodeName]
+        visOk = vEntry ~= nil and vEntry.nodeId ~= nil and getVisibility(vEntry.nodeId)
       end
-
-      cameraData.node = self.i3dMappings[cameraData.nodeName].nodeId
+      if not nodeVisible or not visOk then
+        skip = true
+      else
+        cameraData.node = nodeEntry.nodeId
+      end
     end
 
-    local camera = VehicleRenderCamera.new(self)
-
-    if camera:loadFromConfig(cameraData) then
-      table.insert(spec.cameras, camera)
+    if not skip then
+      local camera = VehicleRenderCamera.new(self)
+      if camera ~= nil and camera.loadFromConfig ~= nil and camera:loadFromConfig(cameraData) then
+        table.insert(spec.cameras, camera)
+      end
     end
-
-    ::continue::
   end
 
   spec.numCameras = #spec.cameras
