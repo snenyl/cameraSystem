@@ -10,6 +10,8 @@ local CameraSystemInputHelpDisplayExtension_mt = Class(CameraSystemInputHelpDisp
 function CameraSystemInputHelpDisplayExtension.new(customMt)
   local self = setmetatable({}, customMt or CameraSystemInputHelpDisplayExtension_mt)
 
+  Logging.info("DEBUG: Running CameraSystemInputHelpDisplayExtension")
+
   self.isActive = false
 
   self.labelText = g_i18n:getText("ui_cameraSystem_header"):upper()
